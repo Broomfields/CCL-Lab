@@ -4,7 +4,7 @@
 [![Last commit](https://img.shields.io/github/last-commit/Broomfields/CCL-Lab/main)](https://github.com/Broomfields/CCL-Lab/commits/main/)
 [![Licence](https://img.shields.io/github/license/Broomfields/CCL-Lab)](https://github.com/Broomfields/CCL-Lab/blob/main/LICENSE)
 
-CCL-Lab is the shared runtime for Creative Coding Lab, a platform I'm building for my own exploration and self-learning through programming. It uses Lua and LÖVE.
+CCL-Lab is the shared runtime for **Creative Coding Lab**, a platform I'm building for my own exploration and self-learning through programming. It uses Lua and LÖVE.
 
 I want to take ideas I find in books and online and explore them through interactive experiments. These might involve simulation, physics, mathematics, or computation. Programming and visualisation give me a way to see how those ideas behave.
 
