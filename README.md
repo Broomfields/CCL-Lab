@@ -16,7 +16,19 @@ You're welcome to explore the code, run the experiments, or use the platform for
 
 The repository is in its initial setup phase. The capabilities below are planned. I track progress in the [Creative Coding Lab project](https://github.com/users/Broomfields/projects/5).
 
-Setup instructions and runnable examples will be added as the runtime develops.
+The source and documentation skeleton is in place. See [local development](docs/development.md) for the selected toolchain, setup steps, and prerequisite checks. Runnable examples will follow with the runtime implementation.
+
+## Repository structure
+
+```text
+lab/       shared runtime source, including ui/ and debug/
+tests/     Busted specifications as behaviour is implemented
+scripts/   local development checks
+docs/      repository-specific development documentation
+```
+
+The existing MIT licence applies to the repository. Generated builds, run output,
+and local dependencies are excluded through `.gitignore`.
 
 ## Planned capabilities
 
