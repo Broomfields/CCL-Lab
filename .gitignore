@@ -1,0 +1,17 @@
+# Local development dependencies
+/.luarocks/
+/vendor/
+
+# Generated builds, reports, and run output
+/build/
+/dist/
+/coverage/
+/runs/
+*.love
+*.luac
+luacov.stats.out
+luacov.report.out
+
+# Operating-system files
+.DS_Store
+Thumbs.db
