@@ -1,68 +1,23 @@
 # Local development
 
-## Selected toolchain
+## Toolchain and setup
 
-| Component | Baseline | Purpose |
-|---|---|---|
-| Lua language | Lua 5.1 | Source compatibility. Avoid Lua 5.2–5.5-only syntax and standard-library APIs. |
-| LÖVE | 11.5 | Target application framework; uses its bundled Lua runtime. |
-| Standalone LuaJIT | 2.1 | Run headless Lua checks and Busted using the Lua 5.1 language baseline. |
-| LuaRocks | 3.x (verified with 3.13.0) | Install local test dependencies for Lua 5.1/LuaJIT. |
-| Busted | 2.3.0-1 | Standard test framework; CLI reports 2.3.0. |
-| Git | 2.x | Source control. |
-| POSIX shell and C build tools | Platform supplied | Development scripts and compilation of LuaRocks dependencies. |
+The approved baseline lives in [`toolchain.manifest`](../toolchain.manifest).
+See the [toolchain contract](toolchain.md) for the schema, exact-version setup,
+external installation instructions, platform support, and upgrade policy.
 
-LÖVE 11.5 is the initial project target, not a promise of compatibility with
-other releases. LuaJIT 2.1 uses rolling releases; the standalone build verified
-on 19 October 2026 is `2.1.1787165859`. A standalone `lua` command may point to a
-newer language version and is not used for Lab checks.
+After installing the recorded external tools and setting `LUAJIT_PREFIX`:
 
-Sources: [LÖVE 11.5 release](https://github.com/love2d/love/releases/tag/11.5),
-[LuaJIT compatibility](https://luajit.org/extensions.html),
-[LuaJIT version policy](https://luajit.org/status.html), and
-[Busted 2.3.0-1](https://luarocks.org/modules/lunarmodules/busted/2.3.0-1).
+```sh
+sh scripts/toolchain.sh setup
+sh scripts/check-prerequisites.sh
+sh tests/toolchain/check.sh
+```
 
-## Setup
-
-1. Install Git, LÖVE 11.5, LuaJIT 2.1, LuaRocks 3.x, and your platform's C build
-   tools. On macOS, the command-line developer tools provide the compiler;
-   LuaJIT and LuaRocks can be installed with Homebrew. Obtain LÖVE 11.5 from
-   the release linked above. Ensure `git`, `luajit`, `luarocks`, and `love` are
-   on `PATH`. On Windows, use a POSIX shell with these tools accessible.
-2. Clone the repository and enter it:
-
-   ```sh
-   git clone https://github.com/Broomfields/CCL-Lab.git
-   cd CCL-Lab
-   ```
-
-3. Install Busted for LuaJIT into the ignored repository-local tree. Set
-   `LUAJIT_PREFIX` to the installation prefix containing LuaJIT's `bin`,
-   `include`, and `lib` directories. For Homebrew on macOS:
-
-   ```sh
-   LUAJIT_PREFIX="$(brew --prefix luajit)"
-   luarocks --lua-version=5.1 --lua-dir="$LUAJIT_PREFIX" --tree=.luarocks install busted 2.3.0-1
-   ```
-
-   On other systems, substitute your LuaJIT prefix (commonly `/usr` or
-   `/usr/local`). LuaJIT development headers are required. LuaRocks resolves
-   Busted's transitive dependencies at installation time; this is not a lockfile.
-
-4. Verify prerequisites:
-
-   ```sh
-   sh scripts/check-prerequisites.sh
-   ```
-
-   If LÖVE is installed as a macOS application without a `love` command:
-
-   ```sh
-   LOVE_BIN=/Applications/love.app/Contents/MacOS/love sh scripts/check-prerequisites.sh
-   ```
-
-The checker reports every missing, incompatible, or failing tool and exits
-nonzero if any check fails. It does not install or modify anything.
+For a macOS application bundle, set
+`LOVE_BIN=/Applications/love.app/Contents/MacOS/love` when running setup/checks.
+Setup installs only missing recorded rocks into the ignored `.luarocks` tree.
+It never upgrades the manifest or system tools. Checks are read-only.
 
 ## Working on Lab
 
@@ -82,15 +37,10 @@ release-intent label. Repository-only setup uses `release:none`.
 
 ## Troubleshooting
 
-- A global `busted` can reference a removed Lua interpreter or modules installed
-  for a different Lua version. Use `.luarocks/bin/busted` and reinstall
-  the local tree for Lua 5.1 using step 3 after moving the checkout or LuaJIT.
-- Lua 5.4/5.5 rocks are not interchangeable with LuaJIT's Lua 5.1 modules. Keep
-  the `--lua-version=5.1` and `--lua-dir` options together during installation.
-- Missing headers or compiler errors during installation require the platform's
-  LuaJIT development package and C build tools.
-- Passing version checks verifies the CLI prerequisites only. Graphics, audio,
-  and platform packaging need separate integration checks when implemented.
+See [external installation and restoration](toolchain.md#external-installation-and-restoration).
+Do not use a global Busted launcher or reuse a dependency tree built for a
+different interpreter. Passing checks establishes prerequisite availability;
+graphics/audio startup and runtime integration require separate future checks.
 
 ## Initial verification
 

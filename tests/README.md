@@ -11,3 +11,9 @@ There are no runtime specifications yet. The prerequisite checker verifies the
 toolchain only; it does not claim to validate runtime behaviour or a LÖVE window.
 Future integration fixtures should exercise actual LÖVE startup separately from
 pure Lua specifications.
+
+## Toolchain foundation checks
+
+Run `sh tests/toolchain/check.sh` for standalone manifest and setup-command
+contract tests. These use LuaJIT and isolated command fixtures, require no Busted
+installation or network, and do not claim runtime compatibility.
