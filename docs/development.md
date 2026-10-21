@@ -17,6 +17,8 @@ sh tests/toolchain/check.sh
 For a macOS application bundle, set
 `LOVE_BIN=/Applications/love.app/Contents/MacOS/love` when running setup/checks.
 Setup installs only missing recorded rocks into the ignored `.luarocks` tree.
+For consumers of a vendored Lab package, the [toolchain contract](toolchain.md)
+explains how to target the consuming project while using Lab's manifest.
 It never upgrades the manifest or system tools. Checks are read-only.
 
 ## Working on Lab

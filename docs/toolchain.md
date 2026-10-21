@@ -2,8 +2,10 @@
 
 Lab owns the approved baseline in [`toolchain.manifest`](../toolchain.manifest).
 It is separate from repository release metadata and experiment version metadata.
-Template must carry identical values for the exact published Lab release it selects;
-comparing unrelated latest branches is not a supported-pair check.
+Template and experiments consume this manifest from the exact published Lab
+release selected by their version metadata. They do not maintain separate
+copies of toolchain requirements. Their version metadata remains responsible for
+experiment version, Template provenance and the exact Lab dependency as applicable.
 
 ## Manifest schema 1
 
@@ -39,21 +41,43 @@ Run from the repository root (the scripts also work from other directories):
 
 ```sh
 sh scripts/toolchain.sh validate
-sh scripts/toolchain.sh compare /path/to/lab/toolchain.manifest /path/to/template/toolchain.manifest
 sh scripts/toolchain.sh check
 sh scripts/toolchain.sh setup
 sh tests/toolchain/check.sh
 ```
 
 `validate [path]` reads and checks a manifest without inspecting installed tools.
-`compare <Lab manifest> <Template manifest>` validates both and requires equality
-of every schema field, including the resolved dependency set and setup requirements.
-It prints differing key names. It does not establish release identity: Template's
-release-selection/fetch boundary must supply the manifest from its selected release.
 Paths passed explicitly are relative to the caller's directory.
 
-`check` checks the platform, external tools, exact local rock inventory and Busted
-CLI. `scripts/check-prerequisites.sh` remains a read-only alias. `setup` performs
+For Template development or a generated experiment, invoke the setup entry point
+from its verified vendored Lab package and name the consuming project directory:
+
+```sh
+sh vendor/lab/scripts/toolchain.sh setup --project-dir .
+sh vendor/lab/scripts/toolchain.sh check --project-dir .
+```
+
+`setup` and `check` accept `--project-dir <directory>`. The directory must already
+exist; relative paths are resolved against the caller's working directory. Without
+this option, both commands target Lab's own checkout, preserving Lab development
+behaviour. The manifest always comes from the Lab copy containing the invoked
+script. The option changes only the destination/inspection tree to
+`<project-dir>/.luarocks`, including the Busted launcher used by checks. A manifest
+in the consuming project root is ignored. Nothing is installed inside vendored
+Lab when the consuming project is explicitly selected.
+
+Template owns the preceding bootstrap: read its declared Lab release, fetch or
+restore a verified cached package into `vendor/lab`, and verify release identity
+and provenance before invoking these commands. The Lab source-package contract
+must include this setup entry point and its implementation/parser alongside the
+manifest so consumers can reuse them. Fetching, package publication and workflow
+integration remain downstream; controlled package fixtures exercise this interface
+until those capabilities exist. Minimal tools needed to fetch Lab must be available
+before its toolchain can be read. The current checker does not verify release
+identity and does not fetch anything.
+
+`check` checks the platform, external tools, exact selected-project rock inventory
+and Busted CLI. `scripts/check-prerequisites.sh` remains a read-only alias. `setup` performs
 those external checks before installing anything, refuses an unexpected existing
 rock/version, then installs each missing recorded rock with `--deps-mode=none`
 and an explicit registry. No dependency version is selected by a resolver during
@@ -89,8 +113,8 @@ Supporting them requires a recorded platform recipe and fresh validation, not
 silently relaxing the platform gate.
 
 An interrupted ordinary setup can leave successfully installed approved rocks in
-`.luarocks`; correct the reported problem and rerun it. The approved manifest is
-unchanged. If inventory checks detect unapproved or multiple package versions,
+the selected project's `.luarocks`; correct the reported problem and rerun it.
+The approved manifest is unchanged. If inventory checks detect unapproved or multiple package versions,
 preserve/rename the old `.luarocks` directory and create a fresh tree with setup.
 Do not reuse a tree from another interpreter, machine, or checkout location:
 LuaRocks launchers and native modules can embed paths. There is no automatic
@@ -126,7 +150,8 @@ The downstream implementation must:
 2. Record exact Lab/Template candidate revisions, platform/build provenance and
    tool versions. Run applicable checks there, extending them with a fresh
    application and actual LÖVE startup when the runtime fixture exists.
-3. On failure, preserve both approved manifests and the working environment.
+3. On failure, preserve the approved Lab manifest, declared dependency metadata
+   and working environment.
    On success, prepare reviewable edits and optional linked draft PRs. Never
    automatically approve, merge or publish them.
 4. Require maintainer application testing and review of the exact tested pair;
@@ -137,8 +162,14 @@ The downstream implementation must:
 Every subsequent approved tool-version change, including development tools and
 resolved rocks, requires Lab major release intent and a subsequent Template major
 release adopting it. Repository major numbers need not match. Latest releases may
-temporarily differ; each declared pairing must match. This initial recording of
-the already selected baseline is repository setup (`release:none`), not an upgrade.
+temporarily differ; each pairing consumes its declared Lab release's manifest.
+This initial recording of the already selected baseline is repository setup
+(`release:none`), not an upgrade.
+
+Changing the selected Lab release does not delete the consuming project's rock
+tree. Setup/check validates that existing tree against the newly selected manifest
+and reports incompatible versions; it does not silently replace them. Restoration
+is explicit, as described above.
 
 The foundation does not implement full Busted suites, runtime integration,
 GitHub Actions, upgrade orchestration, application metadata, fetching or release

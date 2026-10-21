@@ -15,5 +15,6 @@ pure Lua specifications.
 ## Toolchain foundation checks
 
 Run `sh tests/toolchain/check.sh` for standalone manifest and setup-command
-contract tests. These use LuaJIT and isolated command fixtures, require no Busted
+contract tests, including consuming a vendored Lab manifest with a separate
+project dependency directory. These use LuaJIT and isolated command fixtures, require no Busted
 installation or network, and do not claim runtime compatibility.
