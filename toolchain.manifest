@@ -1,0 +1,20 @@
+# Approved baseline. Schema and ownership: docs/toolchain.md
+schema=1
+language.lua=5.1
+tool.love=11.5
+tool.luajit=2.1.1787165859
+tool.luarocks=3.13.0
+platform.setup=Darwin-arm64
+prerequisite.git=2
+prerequisite.compiler=cc
+rocks.server=https://luarocks.org
+rock.busted=2.3.0-1
+rock.dkjson=2.11-1
+rock.lua-term=0.8-1
+rock.lua_cliargs=3.0.2-1
+rock.luafilesystem=1.9.0-1
+rock.luassert=1.9.0-1
+rock.luasystem=0.7.1-1
+rock.mediator_lua=1.1.2-0
+rock.penlight=1.15.0-1
+rock.say=1.4.1-3
