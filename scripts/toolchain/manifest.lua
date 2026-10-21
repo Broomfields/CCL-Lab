@@ -47,14 +47,5 @@ function M.read(path)
     return result
 end
 
-function M.compare(left, right)
-    local differences = {}
-    for key, value in pairs(left) do
-        if value ~= right[key] then differences[#differences + 1] = key end
-    end
-    table.sort(differences)
-    return differences
-end
-
 M.rocks = rocks
 return M

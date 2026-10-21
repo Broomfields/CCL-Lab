@@ -19,7 +19,8 @@ local function rejects(text, expected)
 end
 local ok, err = pcall(function()
     local approved = read(baseline)
-    assert(#parser.compare(approved, read(baseline:gsub('\n', '\r\n'))) == 0)
+    local crlf = read(baseline:gsub('\n', '\r\n'))
+    for key, value in pairs(approved) do assert(crlf[key] == value) end
     count = count + 1
     rejects(baseline .. 'schema=1\n', 'Duplicate key')
     rejects(baseline .. 'unknown=value\n', 'unknown key')
@@ -31,16 +32,6 @@ local ok, err = pcall(function()
     rejects(baseline:gsub('tool.love=[^\n]+', 'tool.love=latest'), 'invalid value')
     rejects(baseline:gsub('rock.busted=[^\n]+', 'rock.busted=2..3-1'), 'Invalid package version')
     rejects(baseline:gsub('tool.love=[^\n]+', 'tool.love=11.5;touch'), 'invalid value')
-    for key, value in pairs(approved) do
-        if key:match('^tool%.') or key:match('^rock%.') then
-            local changed = {}
-            for k, v in pairs(approved) do changed[k] = v end
-            changed[key] = value .. '0'
-            local differences = parser.compare(approved, changed)
-            assert(#differences == 1 and differences[1] == key)
-            count = count + 1
-        end
-    end
 end)
 os.remove(temporary)
 assert(ok, err)

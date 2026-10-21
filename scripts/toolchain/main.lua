@@ -1,5 +1,6 @@
 local root = assert(arg[1])
 local manifest = dofile(root .. '/scripts/toolchain/manifest.lua')
+local project_root = root
 local function quote(value)
     return "'" .. value:gsub("'", "'\\''") .. "'"
 end
@@ -46,7 +47,7 @@ local function external_checks(values)
     if failed then error('External prerequisites failed. See docs/toolchain.md; nothing installed.', 0) end
 end
 local function rock_arguments(values)
-    return {'luarocks', '--lua-version=' .. values['language.lua'], '--tree=' .. root .. '/.luarocks'}
+    return {'luarocks', '--lua-version=' .. values['language.lua'], '--tree=' .. project_root .. '/.luarocks'}
 end
 local function installed_rocks(values)
     local arguments = rock_arguments(values)
@@ -69,10 +70,10 @@ local function check_rocks(values)
     local installed = installed_rocks(values)
     for _, name in ipairs(manifest.rocks) do
         if installed[name] ~= values['rock.' .. name] then
-            error('Missing local rock: ' .. name .. '. Run sh scripts/toolchain.sh setup.', 0)
+            error('Missing local rock: ' .. name .. '. Run the selected Lab setup entry point with the same project directory.', 0)
         end
     end
-    local output = require_command({root .. '/.luarocks/bin/busted', '--version'})
+    local output = require_command({project_root .. '/.luarocks/bin/busted', '--version'})
     local expected = values['rock.busted']:match('^(.*)%-%d+$')
     if output:match('^(%S+)') ~= expected then error('Local Busted CLI version mismatch', 0) end
     print('OK   local rock inventory and Busted CLI')
@@ -116,18 +117,15 @@ local function main()
     if command == 'validate' and not arg[4] then
         manifest.read(arg[3] or root .. '/toolchain.manifest')
         print('OK   manifest')
-    elseif command == 'compare' and arg[3] and arg[4] and not arg[5] then
-        local differences = manifest.compare(manifest.read(arg[3]), manifest.read(arg[4]))
-        if #differences > 0 then error('Manifest mismatch: ' .. table.concat(differences, ', '), 0) end
-        print('OK   identical approved manifests')
     elseif command == 'upgrade' then
         error('Upgrade execution is not implemented. See docs/toolchain.md and CCL-Lab#3. Approved state unchanged.', 0)
-    elseif (command == 'setup' or command == 'check') and not arg[3] then
+    elseif (command == 'setup' or command == 'check') and arg[3] and not arg[4] then
+        project_root = arg[3]
         local values = manifest.read(root .. '/toolchain.manifest')
         if command == 'setup' then setup(values)
         else external_checks(values); check_rocks(values) end
     else
-        error('Usage: sh scripts/toolchain.sh validate [manifest] | compare <Lab manifest> <Template manifest> | check | setup | upgrade', 0)
+        error('Usage: sh scripts/toolchain.sh validate [manifest] | check [--project-dir directory] | setup [--project-dir directory] | upgrade', 0)
     end
 end
 local ok, err = pcall(main)
