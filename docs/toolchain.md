@@ -126,13 +126,14 @@ never a reason to substitute the latest version.
 
 The `rock.*` entries record the full dependency inventory of the existing verified
 local Busted environment, including native `luafilesystem`, `lua-term` and
-`luasystem`. See [baseline provenance](toolchain-resolution.md) for the recorded
-rockspec identities and local build context. Setup pins those package revisions
-and disables transitive resolution; it does not assert byte-for-byte builds.
+`luasystem`. The initial inventory was captured from the verified macOS Apple
+Silicon development environment and checked with a fresh installation in a
+temporary dependency tree. Setup pins those package revisions and disables
+transitive resolution; it does not assert byte-for-byte builds.
 
 Registry assets, source tags, compiler/SDK versions and external-tool installation
-recipes are not fully content-addressed by this foundation. Recorded rockspec
-hashes are audit evidence, not an installer-enforced source lock. Future immutable
+recipes are not fully content-addressed by this foundation. There is no
+installer-enforced source lock. Future immutable
 reproduction must record and verify source/archive digests, complete platform
 build inputs and any changed transitive closure. Never describe top-level pins
 alone as full reproducibility. Package licences remain with their packages.
