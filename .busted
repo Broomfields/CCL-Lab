@@ -1,0 +1,11 @@
+assert(_VERSION == "Lua 5.1" and jit and jit.version_num >= 20100,
+    "Lab tests require LuaJIT 2.1; see docs/development.md")
+
+return {
+    default = {
+        ROOT = { "tests" },
+        pattern = "_spec%.lua$",
+        lpath = "./?.lua;./?/init.lua",
+        loaders = "lua",
+    },
+}
