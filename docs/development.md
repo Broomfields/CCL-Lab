@@ -64,6 +64,33 @@ Sources: [LÖVE 11.5 release](https://github.com/love2d/love/releases/tag/11.5),
 The checker reports every missing, incompatible, or failing tool and exits
 nonzero if any check fails. It does not install or modify anything.
 
+## Running Busted
+
+After installing the local dependencies in step 3, run from the repository root:
+
+```sh
+.luarocks/bin/busted
+```
+
+The checked-in [`.busted`](../.busted) requires LuaJIT 2.1, limits
+discovery to `tests/**/*_spec.lua`, and configures module lookup from the
+repository root. The local LuaRocks executable uses the interpreter selected
+during installation; the configuration rejects an incompatible runtime. Use
+the local executable so tests load the repository's dependencies rather than
+a global Busted installation. Do not add Busted's `--lua` option: restarting
+the interpreter discards the local module paths set by the LuaRocks wrapper.
+
+There are currently no specifications. Busted reports zero successes and exits
+nonzero when it finds no test files; this is not a passing runtime test suite.
+Add specifications as behaviour is implemented. These headless tests run in
+standalone LuaJIT, without LÖVE's `love` global or a graphics window.
+
+See [test instructions](../tests/README.md) for naming and running individual
+specifications. The [official Busted documentation](https://lunarmodules.github.io/busted/)
+covers installation, CLI options, `.busted` tasks, assertions, and test hooks;
+the [Busted source and releases](https://github.com/lunarmodules/busted) provide
+version-specific details.
+
 ## Working on Lab
 
 Follow the [coding standards](https://github.com/Broomfields/CCL-Docs/blob/main/coding-standards.md).
