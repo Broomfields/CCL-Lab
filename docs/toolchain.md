@@ -15,9 +15,9 @@ inline comments, duplicate or unknown keys, missing keys, and unsupported values
 | Keys | Meaning |
 | --- | --- |
 | `schema` | Format version. Only schema 1 is implemented. |
-| `language.lua` | Source language compatibility. Schema 1 supports Lua 5.1. |
+| `language.lua` | Required Lua language version for source compatibility. |
 | `tool.love` | Exact framework release (`major.minor`), including its bundled runtime. |
-| `tool.luajit` | Exact standalone rolling build (`2.1.build`) for local checks. |
+| `tool.luajit` | Exact standalone rolling build for local checks. |
 | `tool.luarocks` | Exact installer version (`major.minor.patch`). |
 | `rock.*` | Exact package versions, including rockspec revisions (`version-revision`). |
 | `rocks.server` | Package registry. Schema 1 uses `https://luarocks.org`. |

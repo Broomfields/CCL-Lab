@@ -21,8 +21,9 @@ consuming-project setup, dependency restoration, and upgrade policy.
 ## Working on Lab
 
 Follow the [coding standards](https://github.com/Broomfields/CCL-Docs/blob/main/coding-standards.md).
-Use Lua 5.1-compatible source, explicit dependencies, and behaviour-focused Busted
-specifications. See [source responsibilities](../lab/README.md) and
+Use source compatible with the Lua language version in
+[`toolchain.manifest`](../toolchain.manifest), explicit dependencies, and
+behaviour-focused Busted specifications. See [source responsibilities](../lab/README.md) and
 [test instructions](../tests/README.md).
 
 Develop on a short-lived branch and integrate through a reviewed PR. The
