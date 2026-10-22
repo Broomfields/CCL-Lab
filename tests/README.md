@@ -10,7 +10,8 @@ sh tests/toolchain/check.sh
 
 These standalone checks use LuaJIT and isolated command fixtures to exercise
 manifest validation, pinned setup, failure handling, and a consuming project's
-use of vendored Lab. They run offline before Busted is installed.
+use of vendored Lab. They run offline before Busted is installed and verify
+setup behaviour. Runtime compatibility requires application integration tests.
 
 ## Runtime specifications
 
@@ -21,5 +22,4 @@ behaviour. Run them from the repository root with:
 .luarocks/bin/busted tests
 ```
 
-Runtime specifications and LÖVE startup fixtures will accompany runtime
-implementation. See the [follow-through tasks](../docs/toolchain.md#follow-through).
+Runtime specifications and LÖVE startup fixtures are not yet available.

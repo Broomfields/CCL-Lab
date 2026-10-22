@@ -1,8 +1,7 @@
 # Local development
 
-Lab currently contains the library skeleton and toolchain setup. Runnable
-applications, runtime tests, and CI/release workflows are planned in the
-[follow-through tasks](toolchain.md#follow-through).
+Lab currently contains the library skeleton and toolchain setup. A runnable
+application is not yet available.
 
 ## Setup
 

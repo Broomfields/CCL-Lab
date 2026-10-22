@@ -146,18 +146,3 @@ Each repository advances its own version sequence. Template can continue using
 its declared Lab release while a newer Lab release awaits adoption.
 
 Recording the initial approved baseline uses `release:none`.
-
-## Follow-through
-
-| Work | Owner |
-| --- | --- |
-| Full Busted setup and local validation | [Lab #2](https://github.com/Broomfields/CCL-Lab/issues/2) |
-| CI and isolated upgrade execution | [Lab #3](https://github.com/Broomfields/CCL-Lab/issues/3) |
-| Runtime fixture and LÖVE startup checks | [Lab #4](https://github.com/Broomfields/CCL-Lab/issues/4) |
-| Source packages and release/fetch verification | [Lab #5](https://github.com/Broomfields/CCL-Lab/issues/5) |
-| Release declarations and dependency fetching | Existing version-metadata and dependency-fetch tasks |
-
-Controlled package fixtures exercise the consumption interface until fetching
-and published releases are available. Foundation checks establish manifest and
-setup behaviour. Runtime compatibility requires the later integration checks.
-These downstream tasks can build on the foundation without blocking its completion.
