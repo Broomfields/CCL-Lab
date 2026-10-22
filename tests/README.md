@@ -1,13 +1,25 @@
 # Tests
 
-Add Busted specifications named `*_spec.lua` here alongside each implemented
-shared behaviour. Run from the repository root with:
+## Toolchain checks
+
+Run from the repository root:
+
+```sh
+sh tests/toolchain/check.sh
+```
+
+These standalone checks use LuaJIT and isolated command fixtures to exercise
+manifest validation, pinned setup, failure handling, and a consuming project's
+use of vendored Lab. They run offline before Busted is installed and verify
+setup behaviour. Runtime compatibility requires application integration tests.
+
+## Runtime specifications
+
+Add Busted specifications named `*_spec.lua` alongside each implemented shared
+behaviour. Run them from the repository root with:
 
 ```sh
 .luarocks/bin/busted tests
 ```
 
-There are no runtime specifications yet. The prerequisite checker verifies the
-toolchain only; it does not claim to validate runtime behaviour or a LÖVE window.
-Future integration fixtures should exercise actual LÖVE startup separately from
-pure Lua specifications.
+Runtime specifications and LÖVE startup fixtures are not yet available.
