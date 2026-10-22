@@ -1,182 +1,163 @@
 # Toolchain contract
 
-Lab owns the approved baseline in [`toolchain.manifest`](../toolchain.manifest).
-It is separate from repository release metadata and experiment version metadata.
-Template and experiments consume this manifest from the exact published Lab
-release selected by their version metadata. They do not maintain separate
-copies of toolchain requirements. Their version metadata remains responsible for
-experiment version, Template provenance and the exact Lab dependency as applicable.
+Lab owns the approved toolchain in [`toolchain.manifest`](../toolchain.manifest).
+Template and experiments consume that manifest from their exact declared Lab
+release. Application version metadata records the experiment version, Template
+provenance, and selected Lab release.
 
 ## Manifest schema 1
 
-The manifest is UTF-8/ASCII-compatible text with one `key=value` per line.
-Empty lines and full-line comments beginning with `#` are allowed; LF and CRLF
-are accepted. Whitespace around assignments, inline comments, duplicate keys,
-unknown keys, missing keys and unsupported values are errors. Values are data,
-never executable Lua or shell. The parser is `scripts/toolchain/manifest.lua`.
+The parser in `scripts/toolchain/manifest.lua` reads data-only text with one
+`key=value` per line. It accepts blank lines, full-line comments beginning with
+`#`, and LF or CRLF line endings. It rejects whitespace around assignments,
+inline comments, duplicate or unknown keys, missing keys, and unsupported values.
 
 | Keys | Meaning |
 | --- | --- |
-| `schema` | Format version; only schema 1 is implemented. |
-| `language.lua` | Source language compatibility; schema 1 supports Lua 5.1. |
-| `tool.love` | Exact framework release (`major.minor`); LÖVE supplies its own runtime. |
-| `tool.luajit` | Exact standalone rolling build (`2.1.build`), used by local checks. |
+| `schema` | Format version. Only schema 1 is implemented. |
+| `language.lua` | Source language compatibility. Schema 1 supports Lua 5.1. |
+| `tool.love` | Exact framework release (`major.minor`), including its bundled runtime. |
+| `tool.luajit` | Exact standalone rolling build (`2.1.build`) for local checks. |
 | `tool.luarocks` | Exact installer version (`major.minor.patch`). |
-| `rock.*` | Exact package versions including rockspec revisions (`version-revision`). |
-| `rocks.server` | Explicit LuaRocks registry; schema 1 uses `https://luarocks.org`. |
-| `platform.setup` | Supported setup target; initially `Darwin-arm64`. |
-| `prerequisite.git` | Required Git major version, not a pinned tool release. |
+| `rock.*` | Exact package versions, including rockspec revisions (`version-revision`). |
+| `rocks.server` | Package registry. Schema 1 uses `https://luarocks.org`. |
+| `platform.setup` | Supported setup target, initially `Darwin-arm64`. |
+| `prerequisite.git` | Required Git major version. |
 | `prerequisite.compiler` | Platform-provided compiler command, initially `cc`. |
 
-All keys in the checked-in manifest are required. Schema 1 explicitly enumerates
-the resolved Busted dependency closure; adding/removing dependency names requires
-updating the schema/parser and its fixtures. Framework/tool versions and rocks are
-approved pins; Git and the platform compiler are prerequisites, not claims of
-identical compiler builds. The standalone runtime is distinct from LÖVE's bundled
-runtime. Format constraints do not themselves approve a new version.
+All keys in the manifest are required. Adding or removing dependency names
+requires updating the parser and its fixtures. Version approval follows the
+[upgrade contract](#upgrades).
 
-## Commands and exit status
+## Commands
 
-Run from the repository root (the scripts also work from other directories):
+Run these commands from the repository root:
 
 ```sh
 sh scripts/toolchain.sh validate
-sh scripts/toolchain.sh check
 sh scripts/toolchain.sh setup
-sh tests/toolchain/check.sh
+sh scripts/toolchain.sh check
 ```
 
-`validate [path]` reads and checks a manifest without inspecting installed tools.
-Paths passed explicitly are relative to the caller's directory.
+| Command | Behaviour |
+| --- | --- |
+| `validate [path]` | Validates the supplied manifest, defaulting to Lab's manifest. |
+| `setup [--project-dir directory]` | Checks external prerequisites and the existing rock inventory, then installs missing recorded rocks. |
+| `check [--project-dir directory]` | Checks the platform, external tools, exact rock inventory, and local Busted CLI. |
+| `upgrade` | Exits with an error until the upgrade workflow is implemented. |
 
-For Template development or a generated experiment, invoke the setup entry point
-from its verified vendored Lab package and name the consuming project directory:
+`validate` and `check` are read-only. `setup` preserves the manifest and system
+tools. It installs from the recorded registry with `--deps-mode=none`, using the
+recorded version of every dependency. Repeating a successful setup skips all
+installations. `scripts/check-prerequisites.sh` remains an alias for Lab's check.
+
+Commands exit 0 on success and 1 on validation or setup errors. The shell entry
+point reports missing LuaJIT before parsing. Scripts can be invoked from other
+working directories by supplying their paths.
+
+### Consuming projects
+
+After verifying the declared Lab package, Template or an experiment can run:
 
 ```sh
 sh vendor/lab/scripts/toolchain.sh setup --project-dir .
 sh vendor/lab/scripts/toolchain.sh check --project-dir .
 ```
 
-`setup` and `check` accept `--project-dir <directory>`. The directory must already
-exist; relative paths are resolved against the caller's working directory. Without
-this option, both commands target Lab's own checkout, preserving Lab development
-behaviour. The manifest always comes from the Lab copy containing the invoked
-script. The option changes only the destination/inspection tree to
-`<project-dir>/.luarocks`, including the Busted launcher used by checks. A manifest
-in the consuming project root is ignored. Nothing is installed inside vendored
-Lab when the consuming project is explicitly selected.
+The manifest comes from the Lab copy containing the invoked script. The project
+directory determines the `.luarocks` tree and Busted launcher used by setup and
+checks. It must already exist and defaults to Lab's checkout. Explicit relative
+paths are resolved from the caller's working directory.
 
-Template owns the preceding bootstrap: read its declared Lab release, fetch or
-restore a verified cached package into `vendor/lab`, and verify release identity
-and provenance before invoking these commands. The Lab source-package contract
-must include this setup entry point and its implementation/parser alongside the
-manifest so consumers can reuse them. Fetching, package publication and workflow
-integration remain downstream; controlled package fixtures exercise this interface
-until those capabilities exist. Minimal tools needed to fetch Lab must be available
-before its toolchain can be read. The current checker does not verify release
-identity and does not fetch anything.
+Template's bootstrap reads the release declaration, fetches Lab or restores a
+verified cache into `vendor/lab`, and verifies its identity and provenance.
+The tools needed for this fetch must be available before Lab's manifest can be
+read. The published Lab package must include the manifest, setup entry point,
+implementation, and parser in the layout those scripts expect.
 
-`check` checks the platform, external tools, exact selected-project rock inventory
-and Busted CLI. `scripts/check-prerequisites.sh` remains a read-only alias. `setup` performs
-those external checks before installing anything, refuses an unexpected existing
-rock/version, then installs each missing recorded rock with `--deps-mode=none`
-and an explicit registry. No dependency version is selected by a resolver during
-ordinary setup. A second successful setup performs no installations. Neither
-command edits the approved manifest, installs system tools, or upgrades packages.
+## External installation
 
-Commands exit 0 on success and 1 on validation/setup errors. Missing LuaJIT is
-reported by the shell entry point before parsing. These contract tests do not
-require Busted and do not depend on the downstream local-testing task.
+Setup currently supports macOS Apple Silicon. Each additional platform needs an
+installation recipe and validation before its platform check can be enabled.
 
-## External installation and restoration
-
-Read the required versions from the manifest before installing anything. On the
-supported macOS Apple Silicon target:
+Read the required versions from the manifest, then:
 
 1. Install Apple's command-line developer tools (`xcode-select --install`) for
    `cc` and Git. Git must satisfy the manifest prerequisite.
-2. Obtain the exact LÖVE release from [official releases](https://github.com/love2d/love/releases).
-   For the application bundle, set `LOVE_BIN=/Applications/love.app/Contents/MacOS/love`.
-3. Install the exact standalone LuaJIT build, including development headers and
-   libraries, and the exact LuaRocks version. See [LuaJIT installation](https://luajit.org/install.html)
+2. Obtain the recorded LÖVE release from [official releases](https://github.com/love2d/love/releases).
+   For an application bundle, set `LOVE_BIN=/Applications/love.app/Contents/MacOS/love`.
+3. Install the recorded standalone LuaJIT build, including development headers
+   and libraries, and the recorded LuaRocks version. See [LuaJIT installation](https://luajit.org/install.html)
    and [LuaRocks releases](https://github.com/luarocks/luarocks/releases).
-   Existing Homebrew installations are usable only when the checker confirms the
-   recorded versions; an unqualified `brew install` or upgrade is not a pinned
-   provisioning recipe. No automatic system-tool provisioning is supplied here.
-4. Put `luajit`, `luarocks`, `git` and `cc` on PATH. Set `LUAJIT_PREFIX` to the
-   approved installation containing `bin`, `include` and `lib`. For an existing
-   verified Homebrew installation, `brew --prefix luajit` locates that prefix.
+   Existing Homebrew installations are usable when their versions pass the checker.
+4. Put `luajit`, `luarocks`, `git`, and `cc` on PATH. Set `LUAJIT_PREFIX` to the
+   approved installation containing `bin`, `include`, and `lib`. For Homebrew,
+   `brew --prefix luajit` locates that prefix.
 5. Run `sh scripts/toolchain.sh setup`, then `sh scripts/toolchain.sh check`.
 
-Linux, Windows and Intel macOS are not yet supported by this setup entry point.
-Supporting them requires a recorded platform recipe and fresh validation, not
-silently relaxing the platform gate.
+Dependency installation needs network access to the recorded registry and package
+source hosts. An unavailable pinned package causes setup to fail.
 
-An interrupted ordinary setup can leave successfully installed approved rocks in
-the selected project's `.luarocks`; correct the reported problem and rerun it.
-The approved manifest is unchanged. If inventory checks detect unapproved or multiple package versions,
-preserve/rename the old `.luarocks` directory and create a fresh tree with setup.
-Do not reuse a tree from another interpreter, machine, or checkout location:
-LuaRocks launchers and native modules can embed paths. There is no automatic
-removal of an existing environment. Dependency setup needs network access to the
-recorded registry and package source hosts; a missing pinned package is an error,
-never a reason to substitute the latest version.
+## Restoring dependencies
 
-## Resolution and reproducibility limits
+An interrupted setup can leave successfully installed rocks in the project's
+`.luarocks` directory. Correct the reported problem and rerun setup.
 
-The `rock.*` entries record the full dependency inventory of the existing verified
-local Busted environment, including native `luafilesystem`, `lua-term` and
-`luasystem`. The initial inventory was captured from the verified macOS Apple
-Silicon development environment and checked with a fresh installation in a
-temporary dependency tree. Setup pins those package revisions and disables
-transitive resolution; it does not assert byte-for-byte builds.
+Setup rejects unexpected or multiple installed package versions. To restore the
+approved environment, rename the existing `.luarocks` directory and run setup to
+create a fresh tree. Rebuild the tree after changing interpreter, machine, or
+checkout location because launchers and native modules can embed paths.
 
-Registry assets, source tags, compiler/SDK versions and external-tool installation
-recipes are not fully content-addressed by this foundation. There is no
-installer-enforced source lock. Future immutable
-reproduction must record and verify source/archive digests, complete platform
-build inputs and any changed transitive closure. Never describe top-level pins
-alone as full reproducibility. Package licences remain with their packages.
+Selecting another Lab release preserves the project's installed dependencies.
+Setup checks them against the selected manifest and reports any version mismatch.
+Use the same restoration process when the required versions change.
 
-## Explicit upgrade contract (execution deferred)
+## Reproducibility
 
-`sh scripts/toolchain.sh upgrade` currently fails without changing anything and
-points to [Lab #3](https://github.com/Broomfields/CCL-Lab/issues/3). It must not
-pretend that prerequisite checks approve a candidate runtime.
+The manifest records Busted and its complete dependency set, including the
+native `luafilesystem`, `lua-term`, and `luasystem` packages.
 
-The downstream implementation must:
+The current guarantee is package-version pinning. Byte-for-byte reproduction
+would also require verified source/archive hashes and complete platform build
+inputs, including compiler and SDK versions. Package licences remain with their
+packages.
 
-1. Start only at a maintainer's request; resolve stable candidate versions and
-   their complete dependency closure in an isolated environment.
-2. Record exact Lab/Template candidate revisions, platform/build provenance and
-   tool versions. Run applicable checks there, extending them with a fresh
-   application and actual LÖVE startup when the runtime fixture exists.
-3. On failure, preserve the approved Lab manifest, declared dependency metadata
-   and working environment.
-   On success, prepare reviewable edits and optional linked draft PRs. Never
-   automatically approve, merge or publish them.
-4. Require maintainer application testing and review of the exact tested pair;
-   changed candidates invalidate previous evidence.
-5. Publish Lab first. Template then adopts that exact published release and
-   rechecks the real clean-fetch path before its own release.
+## Upgrades
 
-Every subsequent approved tool-version change, including development tools and
-resolved rocks, requires Lab major release intent and a subsequent Template major
-release adopting it. Repository major numbers need not match. Latest releases may
-temporarily differ; each pairing consumes its declared Lab release's manifest.
-This initial recording of the already selected baseline is repository setup
-(`release:none`), not an upgrade.
+The upgrade workflow must:
 
-Changing the selected Lab release does not delete the consuming project's rock
-tree. Setup/check validates that existing tree against the newly selected manifest
-and reports incompatible versions; it does not silently replace them. Restoration
-is explicit, as described above.
+1. Start at a maintainer's request and resolve stable candidate versions with
+   their complete dependency set in an isolated environment.
+2. Record exact Lab and Template revisions, platform/build provenance, and tool
+   versions. Run the available checks, including a fresh application and LÖVE
+   startup once the runtime fixture exists.
+3. Preserve the approved Lab manifest, dependency declarations, and working
+   environment on failure. On success, prepare reviewable edits and optional
+   linked draft PRs.
+4. Require maintainer application testing and approval of the tested pair.
+   Candidate changes require fresh checks and review. Merging and publication
+   remain maintainer-controlled.
+5. Publish Lab first. Template then adopts that exact release and verifies the
+   clean-fetch path before its own release.
 
-The foundation does not implement full Busted suites, runtime integration,
-GitHub Actions, upgrade orchestration, application metadata, fetching or release
-assets. Those remain in [local testing #2](https://github.com/Broomfields/CCL-Lab/issues/2),
-[validation #3](https://github.com/Broomfields/CCL-Lab/issues/3),
-[runtime fixture #4](https://github.com/Broomfields/CCL-Lab/issues/4), and
-[source releases #5](https://github.com/Broomfields/CCL-Lab/issues/5), plus the
-existing version-metadata and dependency-fetch tasks. No dependency cycle through
-those tasks is required to finish this foundation.
+Every approved tool-version change, including development tools and resolved
+rocks, requires a Lab major release and a subsequent Template major release.
+Each repository advances its own version sequence. Template can continue using
+its declared Lab release while a newer Lab release awaits adoption.
+
+Recording the initial approved baseline uses `release:none`.
+
+## Follow-through
+
+| Work | Owner |
+| --- | --- |
+| Full Busted setup and local validation | [Lab #2](https://github.com/Broomfields/CCL-Lab/issues/2) |
+| CI and isolated upgrade execution | [Lab #3](https://github.com/Broomfields/CCL-Lab/issues/3) |
+| Runtime fixture and LÖVE startup checks | [Lab #4](https://github.com/Broomfields/CCL-Lab/issues/4) |
+| Source packages and release/fetch verification | [Lab #5](https://github.com/Broomfields/CCL-Lab/issues/5) |
+| Release declarations and dependency fetching | Existing version-metadata and dependency-fetch tasks |
+
+Controlled package fixtures exercise the consumption interface until fetching
+and published releases are available. Foundation checks establish manifest and
+setup behaviour. Runtime compatibility requires the later integration checks.
+These downstream tasks can build on the foundation without blocking its completion.
